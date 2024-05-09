@@ -115,7 +115,7 @@ func benchBroadcastCluster(b *testing.B, n int) (maxAgentsMsgs int) {
 }
 
 func benchGossipCluster(b *testing.B, n int) (maxAgentsMsgs int) {
-	cl, ags := initGossipCluster(b, n, 3)
+	cl, ags := initGossipCluster(b, n, 2)
 	defer func() {
 		b.ReportMetric(float64(cl.SentMessages()), "msgs")
 	}()
@@ -160,9 +160,9 @@ func initGossipCluster(b *testing.B, n int, fanout int) (types.Cluster, []types.
 
 	cl := local.NewCluster(failures)
 
-	var heartbeat time.Duration = time.Duration(n*20/100) * time.Millisecond
+	var heartbeat time.Duration = time.Duration(n*10/100) * time.Millisecond
 	if n < 500 {
-		heartbeat = 50 * time.Millisecond
+		heartbeat = 25 * time.Millisecond
 	}
 	// if n > 2000 {
 	// 	heartbeat = 45 * time.Millisecond

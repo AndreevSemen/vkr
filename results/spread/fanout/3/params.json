@@ -1,0 +1,13 @@
+{
+    "experiments": 20,
+    "maxN": 1200,
+    "fanout": 3,
+    "logConstants": [
+        "log2(n)",
+        "1.7log2(n)"
+    ],
+    "steps": {
+        "1-100": 1,
+        "101-1000": 2
+    }
+}
