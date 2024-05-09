@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"math/rand"
+	"os"
 	"runtime"
 	"strconv"
 	"sync"
@@ -45,10 +47,16 @@ func BenchmarkGossip(b *testing.B) {
 	// 	runtime.GC()
 	// }
 
-	fmt.Println("id,n,L")
+	records := [][]string{
+		{"id", "n", "L"},
+	}
+	rounds := 1
 	for i := 1; i < 2000; i++ {
 		m := -1
-		for j := 0; j < 5; j++ {
+		if i > 1000 {
+			rounds = 20
+		}
+		for j := 0; j < rounds; j++ {
 			maxMsgs := benchGossipCluster(b, i)
 			if m == -1 || m > maxMsgs {
 				m = maxMsgs
@@ -56,7 +64,27 @@ func BenchmarkGossip(b *testing.B) {
 			runtime.GC()
 		}
 
-		fmt.Printf("%d,%d,%d\n", i+1, i, m)
+		fmt.Printf("%d,%d,%d\n", i, i, m)
+		records = append(records, []string{
+			strconv.Itoa(i),
+			strconv.Itoa(i),
+			strconv.Itoa(m),
+		})
+
+		if i%100 == 0 {
+			f, err := os.Create("bench.csv")
+			if err != nil {
+				b.Fatalf("create file: %s", err.Error())
+			}
+			w := csv.NewWriter(f)
+
+			w.WriteAll(records)
+			w.Flush()
+
+			if err := w.Error(); err != nil {
+				b.Fatalf("write to file: %s", err.Error())
+			}
+		}
 	}
 
 	// b.ReportMetric(float64(maxMsgsSum)/float64(iters), "avg-max-msgs")
