@@ -50,11 +50,11 @@ func BenchmarkGossip(b *testing.B) {
 	records := [][]string{
 		{"id", "n", "L"},
 	}
-	rounds := 1
-	for i := 1; i < 2000; i++ {
+	rounds := 20
+	for i := 0; i <= 2000; i += 10 {
 		m := -1
 		if i > 1000 {
-			rounds = 20
+			rounds = 25
 		}
 		for j := 0; j < rounds; j++ {
 			maxMsgs := benchGossipCluster(b, i)
@@ -144,11 +144,24 @@ func initGossipCluster(b *testing.B, n int) (types.Cluster, []types.Agent) {
 
 	cl := local.NewCluster(failures)
 
+	var heartbeat time.Duration
+	if n > 2000 {
+		heartbeat = 45 * time.Millisecond
+	} else if n > 1500 {
+		heartbeat = 35 * time.Millisecond
+	} else if n > 1000 {
+		heartbeat = 25 * time.Millisecond
+	} else if n > 500 {
+		heartbeat = 15 * time.Millisecond
+	} else {
+		heartbeat = 10 * time.Millisecond
+	}
+
 	agentCfg := gossip.GossipAgentConfig{
 		SendTimeout: 200 * time.Millisecond,
 		SeedAgents:  make([]string, 0, n),
 		Fanout:      3,
-		Heartbeat:   10 * time.Millisecond,
+		Heartbeat:   heartbeat,
 	}
 
 	for i := 0; i < n; i++ {
