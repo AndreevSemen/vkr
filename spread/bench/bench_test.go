@@ -36,6 +36,7 @@ func BenchmarkBroadcast(b *testing.B) {
 }
 
 func BenchmarkGossip(b *testing.B) {
+	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 	b.StopTimer()
 	b.ResetTimer()
 
@@ -47,15 +48,25 @@ func BenchmarkGossip(b *testing.B) {
 	// 	runtime.GC()
 	// }
 
+	incCounter := func(n int) int {
+		if n > 100 {
+			return n + 2
+		}
+		if n > 500 {
+			return n + 10
+		}
+		return n + 1
+	}
+
 	records := [][]string{
 		{"id", "n", "L"},
 	}
-	rounds := 20
-	for i := 0; i <= 2000; i += 10 {
-		m := -1
-		if i > 1000 {
-			rounds = 25
+	rounds := 30
+	for i := 0; i <= 2500; i = incCounter(i) {
+		if i == 0 {
+			continue
 		}
+		m := -1
 		for j := 0; j < rounds; j++ {
 			maxMsgs := benchGossipCluster(b, i)
 			if m == -1 || m > maxMsgs {
@@ -84,6 +95,8 @@ func BenchmarkGossip(b *testing.B) {
 			if err := w.Error(); err != nil {
 				b.Fatalf("write to file: %s", err.Error())
 			}
+
+			f.Close()
 		}
 	}
 
@@ -144,23 +157,26 @@ func initGossipCluster(b *testing.B, n int) (types.Cluster, []types.Agent) {
 
 	cl := local.NewCluster(failures)
 
-	var heartbeat time.Duration
-	if n > 2000 {
-		heartbeat = 45 * time.Millisecond
-	} else if n > 1500 {
-		heartbeat = 35 * time.Millisecond
-	} else if n > 1000 {
+	var heartbeat time.Duration = time.Duration(n*5/100) * time.Millisecond
+	if n < 500 {
 		heartbeat = 25 * time.Millisecond
-	} else if n > 500 {
-		heartbeat = 15 * time.Millisecond
-	} else {
-		heartbeat = 10 * time.Millisecond
 	}
+	// if n > 2000 {
+	// 	heartbeat = 45 * time.Millisecond
+	// } else if n > 1500 {
+	// 	heartbeat = 35 * time.Millisecond
+	// } else if n > 1000 {
+	// 	heartbeat = 25 * time.Millisecond
+	// } else if n > 500 {
+	// 	heartbeat = 15 * time.Millisecond
+	// } else {
+	// 	heartbeat = 10 * time.Millisecond
+	// }
 
 	agentCfg := gossip.GossipAgentConfig{
 		SendTimeout: 200 * time.Millisecond,
 		SeedAgents:  make([]string, 0, n),
-		Fanout:      3,
+		Fanout:      2,
 		Heartbeat:   heartbeat,
 	}
 
