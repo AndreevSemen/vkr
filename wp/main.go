@@ -23,47 +23,23 @@ func main() {
 	// if err != nil {}
 
 	records := [][]string{
-		{"id", "n", "L"},
+		{"id", "n", "log2(n)", "log3(n)", "log4(n)"},
 	}
-	for i := 0; i < n; i++ {
+	for i := 1; i < n; i++ {
 		records = append(records, []string{
 			strconv.Itoa(i),
 			strconv.Itoa(i),
-			fmt.Sprintf("%.2f", 1*math.Log2(float64(i))),
+			fmt.Sprintf("%.2f", math.Log2(float64(i))/math.Log2(2)),
+			fmt.Sprintf("%.2f", math.Log2(float64(i))/math.Log2(3)),
+			fmt.Sprintf("%.2f", math.Log2(float64(i))/math.Log2(4)),
 		})
 	}
 
-	f, err := os.Create("log2(x).csv")
+	f, err := os.Create("log-bases-merged.csv")
 	if err != nil {
 		panic(err)
 	}
 	w := csv.NewWriter(f)
-
-	w.WriteAll(records)
-	w.Flush()
-
-	if err := w.Error(); err != nil {
-		panic(err)
-	}
-
-	f.Close()
-
-	records = [][]string{
-		{"id", "n", "L"},
-	}
-	for i := 0; i < n; i++ {
-		records = append(records, []string{
-			strconv.Itoa(i),
-			strconv.Itoa(i),
-			fmt.Sprintf("%.2f", 1.7*math.Log2(float64(i))),
-		})
-	}
-
-	f, err = os.Create("1.7log2(x).csv")
-	if err != nil {
-		panic(err)
-	}
-	w = csv.NewWriter(f)
 
 	w.WriteAll(records)
 	w.Flush()

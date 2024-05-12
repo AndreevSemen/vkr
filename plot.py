@@ -1,18 +1,18 @@
-import matplotlib.pyplot as plt
+import pandas
+import random
 import numpy as np
+import matplotlib.pyplot as plt
+import math
 
-plt.style.use('_mpl-gallery')
+def f1(t):
+    return t * t
 
-# make data
-x = np.linspace(0, 10, 100)
-y = 4 + 2 * np.sin(2 * x)
+def f2(t):
+    return t * np.log2(t)
 
-# plot
-fig, ax = plt.subplots()
+t = np.arange(0.0, 10, 1)
 
-ax.plot(x, y, linewidth=2.0)
-
-ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
-       ylim=(0, 8), yticks=np.arange(1, 8))
-
+plt.figure()
+# plt.plot(t, f1(t), 'g-', t, f1(t), 'k')
+plt.plot(t, f2(t), 'r-')
 plt.show()
