@@ -14,10 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"gossip_emulation/spread/agent/broadcast"
-	"gossip_emulation/spread/agent/gossip"
-	"gossip_emulation/spread/cluster/local"
-	"gossip_emulation/spread/types"
+	"gossip_emulation/internal/spread/agent/broadcast"
+	"gossip_emulation/internal/spread/agent/gossip"
+	"gossip_emulation/internal/spread/cluster/local"
+	"gossip_emulation/internal/spread/types"
 )
 
 func BenchmarkBroadcast(b *testing.B) {

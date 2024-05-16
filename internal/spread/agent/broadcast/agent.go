@@ -1,7 +1,7 @@
 package broadcast
 
 import (
-	"gossip_emulation/spread/types"
+	"gossip_emulation/internal/spread/types"
 	"time"
 
 	"golang.org/x/sync/errgroup"
