@@ -1,7 +1,7 @@
 package detector
 
 import (
-	"gossip_emulation/detect/types"
+	"gossip_emulation/internal/detect/types"
 	"net/http"
 	"net/url"
 	"testing"

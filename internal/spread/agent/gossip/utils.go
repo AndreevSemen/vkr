@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"gossip_emulation/spread/types"
+	"gossip_emulation/internal/spread/types"
 )
 
 func newEventQueue() (chan<- types.Event, <-chan types.Event) {

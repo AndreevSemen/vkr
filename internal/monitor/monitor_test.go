@@ -1,11 +1,11 @@
 package monitor
 
 import (
-	"gossip_emulation/detect/detector/detector"
-	"gossip_emulation/spread/cluster/local"
-	"log"
+	"gossip_emulation/internal/detect/detector/detector"
+	"gossip_emulation/internal/spread/agent/gossip"
+	"gossip_emulation/internal/spread/cluster/local"
 
-	"gossip_emulation/spread/agent/gossip"
+	"log"
 	"net/http"
 	"net/url"
 	"testing"

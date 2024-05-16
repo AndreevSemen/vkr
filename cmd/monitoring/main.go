@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
-	"flag"
-	"gossip_emulation/controller"
-	"gossip_emulation/detect/detector/detector"
-	monitor "gossip_emulation/monitor"
-	"gossip_emulation/spread/agent/gossip"
-	"gossip_emulation/spread/cluster/udp"
+	"gossip_emulation/internal/controller"
+	"gossip_emulation/internal/detect/detector/detector"
+	monitor "gossip_emulation/internal/monitor"
+	"gossip_emulation/internal/spread/agent/gossip"
+	"gossip_emulation/internal/spread/cluster/udp"
 	"strings"
 
+	"context"
+	"flag"
 	"log"
 	"net/http"
 	"net/url"

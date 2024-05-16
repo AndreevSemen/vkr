@@ -1,8 +1,8 @@
-package monitor
+package detector
 
 import (
 	"context"
-	"gossip_emulation/detect/types"
+	"gossip_emulation/internal/detect/types"
 	"math/rand"
 	"net"
 	"net/http"
@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	ErrNoHostsToMonitor = errors.New("no hosts to monitor")
+	ErrNoHostsToDetect = errors.New("no hosts to detect")
 )
 
-type HTTPMonitorConfig struct {
+type HTTPDetectorConfig struct {
 	Hosts         []url.URL
 	CheckInterval time.Duration
 	HealthCheck   func(*http.Response) bool
@@ -29,8 +29,8 @@ type HTTPMonitorConfig struct {
 	ICMPTimeout   time.Duration
 }
 
-type HTTPMonitor struct {
-	cfg HTTPMonitorConfig
+type HTTPDetector struct {
+	cfg HTTPDetectorConfig
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -39,9 +39,9 @@ type HTTPMonitor struct {
 	events chan types.Event
 }
 
-func NewHTTPMonitor(cfg HTTPMonitorConfig) (types.Detector, error) {
+func NewHTTPDetector(cfg HTTPDetectorConfig) (types.Detector, error) {
 	if len(cfg.Hosts) == 0 {
-		return nil, ErrNoHostsToMonitor
+		return nil, ErrNoHostsToDetect
 	}
 
 	hosts := make([]url.URL, len(cfg.Hosts))
@@ -52,7 +52,7 @@ func NewHTTPMonitor(cfg HTTPMonitorConfig) (types.Detector, error) {
 	cfg.Hosts = hosts
 
 	ctx, cancel := context.WithCancel(context.Background())
-	m := &HTTPMonitor{
+	d := &HTTPDetector{
 		cfg:    cfg,
 		events: make(chan types.Event),
 		ctx:    ctx,
@@ -60,45 +60,45 @@ func NewHTTPMonitor(cfg HTTPMonitorConfig) (types.Detector, error) {
 		wg:     &sync.WaitGroup{},
 	}
 
-	m.wg.Add(1)
+	d.wg.Add(1)
 	go func() {
-		defer m.wg.Done()
-		m.manage()
+		defer d.wg.Done()
+		d.manage()
 	}()
 
-	return m, nil
+	return d, nil
 }
 
-func (m *HTTPMonitor) DetectorEvents() <-chan types.Event {
-	return m.events
+func (d *HTTPDetector) DetectorEvents() <-chan types.Event {
+	return d.events
 }
 
-func (m *HTTPMonitor) Close() error {
-	m.cancel()
-	m.wg.Wait()
+func (d *HTTPDetector) Close() error {
+	d.cancel()
+	d.wg.Wait()
 	return nil
 }
 
-func (m *HTTPMonitor) manage() {
-	states := make(map[string]types.AppState, len(m.cfg.Hosts))
-	for _, u := range m.cfg.Hosts {
+func (d *HTTPDetector) manage() {
+	states := make(map[string]types.AppState, len(d.cfg.Hosts))
+	for _, u := range d.cfg.Hosts {
 		states[u.Hostname()] = -1
 	}
 
-	ticker := time.NewTicker(m.cfg.CheckInterval)
+	ticker := time.NewTicker(d.cfg.CheckInterval)
 	for {
 		select {
-		case <-m.ctx.Done():
-			close(m.events)
+		case <-d.ctx.Done():
+			close(d.events)
 			return
 
 		case <-ticker.C:
-			u := m.cfg.Hosts[0]
-			m.cfg.Hosts = append(m.cfg.Hosts[1:], m.cfg.Hosts[0])
+			u := d.cfg.Hosts[0]
+			d.cfg.Hosts = append(d.cfg.Hosts[1:], d.cfg.Hosts[0])
 
 			hostname := u.Hostname()
 			state := states[hostname]
-			newState := m.check(u, state)
+			newState := d.check(u, state)
 
 			if newState != state {
 				e := types.Event{
@@ -106,10 +106,10 @@ func (m *HTTPMonitor) manage() {
 					State:    newState,
 				}
 				select {
-				case <-m.ctx.Done():
-					close(m.events)
+				case <-d.ctx.Done():
+					close(d.events)
 					return
-				case m.events <- e:
+				case d.events <- e:
 					states[hostname] = newState
 				}
 			}
@@ -117,32 +117,37 @@ func (m *HTTPMonitor) manage() {
 	}
 }
 
-func (m *HTTPMonitor) check(u url.URL, state types.AppState) types.AppState {
+func (d *HTTPDetector) check(u url.URL, state types.AppState) types.AppState {
+	if u.Hostname() == "wikipedia.org" {
+		i := 0
+		i++
+	}
+
 	switch state {
 	case types.AppState_AppAvailable:
-		if m.checkHTTP(u) {
+		if d.checkHTTP(u) {
 			return types.AppState_AppAvailable
 		}
 
-		if m.checkPort(u) {
+		if d.checkPort(u) {
 			return types.AppState_PortAvailable
 		}
 
-		if m.checkHost(u) {
+		if d.checkHost(u) {
 			return types.AppState_HostAvailable
 		}
 
 		return types.AppState_Unavailable
 
 	case types.AppState_PortAvailable:
-		if m.checkPort(u) {
-			if m.checkHTTP(u) {
+		if d.checkPort(u) {
+			if d.checkHTTP(u) {
 				return types.AppState_AppAvailable
 			} else {
 				return types.AppState_PortAvailable
 			}
 		} else {
-			if m.checkHost(u) {
+			if d.checkHost(u) {
 				return types.AppState_HostAvailable
 			} else {
 				return types.AppState_Unavailable
@@ -150,15 +155,15 @@ func (m *HTTPMonitor) check(u url.URL, state types.AppState) types.AppState {
 		}
 
 	default:
-		if !m.checkHost(u) {
+		if !d.checkHost(u) {
 			return types.AppState_Unavailable
 		}
 
-		if !m.checkPort(u) {
+		if !d.checkPort(u) {
 			return types.AppState_HostAvailable
 		}
 
-		if !m.checkHTTP(u) {
+		if !d.checkHTTP(u) {
 			return types.AppState_PortAvailable
 		}
 
@@ -166,19 +171,19 @@ func (m *HTTPMonitor) check(u url.URL, state types.AppState) types.AppState {
 	}
 }
 
-func (m *HTTPMonitor) checkHTTP(u url.URL) bool {
+func (d *HTTPDetector) checkHTTP(u url.URL) bool {
 	cli := *http.DefaultClient
-	cli.Timeout = m.cfg.HTTPTimeout
+	cli.Timeout = d.cfg.HTTPTimeout
 
 	resp, err := cli.Get(u.String())
 	if err != nil {
 		return false
 	}
 
-	return m.cfg.HealthCheck(resp)
+	return d.cfg.HealthCheck(resp)
 }
 
-func (m *HTTPMonitor) checkPort(u url.URL) bool {
+func (d *HTTPDetector) checkPort(u url.URL) bool {
 	host := u.Hostname()
 	port := u.Port()
 	if port == "" {
@@ -188,7 +193,7 @@ func (m *HTTPMonitor) checkPort(u url.URL) bool {
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), m.cfg.TCPTimeout)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), d.cfg.TCPTimeout)
 	if err != nil {
 		return false
 	}
@@ -200,7 +205,7 @@ func (m *HTTPMonitor) checkPort(u url.URL) bool {
 	return false
 }
 
-func (m *HTTPMonitor) checkHost(u url.URL) bool {
+func (d *HTTPDetector) checkHost(u url.URL) bool {
 	ip, err := net.ResolveIPAddr("ip4", u.Hostname())
 	if err != nil {
 		// log.Printf("Error on ResolveIPAddr %v", err)
@@ -233,7 +238,7 @@ func (m *HTTPMonitor) checkHost(u url.URL) bool {
 		return false
 	}
 
-	err = conn.SetReadDeadline(time.Now().Add(m.cfg.ICMPTimeout))
+	err = conn.SetReadDeadline(time.Now().Add(d.cfg.ICMPTimeout))
 	if err != nil {
 		// log.Printf("Error on SetReadDeadline %v", err)
 		return false

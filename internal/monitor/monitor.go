@@ -1,9 +1,10 @@
 package monitor
 
 import (
+	detect_types "gossip_emulation/internal/detect/types"
+	spread_types "gossip_emulation/internal/spread/types"
+
 	"context"
-	detect_types "gossip_emulation/detect/types"
-	spread_types "gossip_emulation/spread/types"
 	"log"
 	"sync"
 

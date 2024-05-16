@@ -2,7 +2,7 @@ package gossip
 
 import (
 	"context"
-	"gossip_emulation/spread/types"
+	"gossip_emulation/internal/spread/types"
 	"sync"
 	"sync/atomic"
 	"time"

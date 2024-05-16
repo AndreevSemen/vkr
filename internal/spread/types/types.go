@@ -1,7 +1,7 @@
 package types
 
 import (
-	detect_types "gossip_emulation/detect/types"
+	detect_types "gossip_emulation/internal/detect/types"
 	"time"
 
 	"github.com/google/uuid"

@@ -1,8 +1,8 @@
-package detector
+package monitor
 
 import (
 	"context"
-	"gossip_emulation/detect/types"
+	"gossip_emulation/internal/detect/types"
 	"math/rand"
 	"net"
 	"net/http"
@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	ErrNoHostsToDetect = errors.New("no hosts to detect")
+	ErrNoHostsToMonitor = errors.New("no hosts to monitor")
 )
 
-type HTTPDetectorConfig struct {
+type HTTPMonitorConfig struct {
 	Hosts         []url.URL
 	CheckInterval time.Duration
 	HealthCheck   func(*http.Response) bool
@@ -29,8 +29,8 @@ type HTTPDetectorConfig struct {
 	ICMPTimeout   time.Duration
 }
 
-type HTTPDetector struct {
-	cfg HTTPDetectorConfig
+type HTTPMonitor struct {
+	cfg HTTPMonitorConfig
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -39,9 +39,9 @@ type HTTPDetector struct {
 	events chan types.Event
 }
 
-func NewHTTPDetector(cfg HTTPDetectorConfig) (types.Detector, error) {
+func NewHTTPMonitor(cfg HTTPMonitorConfig) (types.Detector, error) {
 	if len(cfg.Hosts) == 0 {
-		return nil, ErrNoHostsToDetect
+		return nil, ErrNoHostsToMonitor
 	}
 
 	hosts := make([]url.URL, len(cfg.Hosts))
@@ -52,7 +52,7 @@ func NewHTTPDetector(cfg HTTPDetectorConfig) (types.Detector, error) {
 	cfg.Hosts = hosts
 
 	ctx, cancel := context.WithCancel(context.Background())
-	d := &HTTPDetector{
+	m := &HTTPMonitor{
 		cfg:    cfg,
 		events: make(chan types.Event),
 		ctx:    ctx,
@@ -60,45 +60,45 @@ func NewHTTPDetector(cfg HTTPDetectorConfig) (types.Detector, error) {
 		wg:     &sync.WaitGroup{},
 	}
 
-	d.wg.Add(1)
+	m.wg.Add(1)
 	go func() {
-		defer d.wg.Done()
-		d.manage()
+		defer m.wg.Done()
+		m.manage()
 	}()
 
-	return d, nil
+	return m, nil
 }
 
-func (d *HTTPDetector) DetectorEvents() <-chan types.Event {
-	return d.events
+func (m *HTTPMonitor) DetectorEvents() <-chan types.Event {
+	return m.events
 }
 
-func (d *HTTPDetector) Close() error {
-	d.cancel()
-	d.wg.Wait()
+func (m *HTTPMonitor) Close() error {
+	m.cancel()
+	m.wg.Wait()
 	return nil
 }
 
-func (d *HTTPDetector) manage() {
-	states := make(map[string]types.AppState, len(d.cfg.Hosts))
-	for _, u := range d.cfg.Hosts {
+func (m *HTTPMonitor) manage() {
+	states := make(map[string]types.AppState, len(m.cfg.Hosts))
+	for _, u := range m.cfg.Hosts {
 		states[u.Hostname()] = -1
 	}
 
-	ticker := time.NewTicker(d.cfg.CheckInterval)
+	ticker := time.NewTicker(m.cfg.CheckInterval)
 	for {
 		select {
-		case <-d.ctx.Done():
-			close(d.events)
+		case <-m.ctx.Done():
+			close(m.events)
 			return
 
 		case <-ticker.C:
-			u := d.cfg.Hosts[0]
-			d.cfg.Hosts = append(d.cfg.Hosts[1:], d.cfg.Hosts[0])
+			u := m.cfg.Hosts[0]
+			m.cfg.Hosts = append(m.cfg.Hosts[1:], m.cfg.Hosts[0])
 
 			hostname := u.Hostname()
 			state := states[hostname]
-			newState := d.check(u, state)
+			newState := m.check(u, state)
 
 			if newState != state {
 				e := types.Event{
@@ -106,10 +106,10 @@ func (d *HTTPDetector) manage() {
 					State:    newState,
 				}
 				select {
-				case <-d.ctx.Done():
-					close(d.events)
+				case <-m.ctx.Done():
+					close(m.events)
 					return
-				case d.events <- e:
+				case m.events <- e:
 					states[hostname] = newState
 				}
 			}
@@ -117,37 +117,32 @@ func (d *HTTPDetector) manage() {
 	}
 }
 
-func (d *HTTPDetector) check(u url.URL, state types.AppState) types.AppState {
-	if u.Hostname() == "wikipedia.org" {
-		i := 0
-		i++
-	}
-
+func (m *HTTPMonitor) check(u url.URL, state types.AppState) types.AppState {
 	switch state {
 	case types.AppState_AppAvailable:
-		if d.checkHTTP(u) {
+		if m.checkHTTP(u) {
 			return types.AppState_AppAvailable
 		}
 
-		if d.checkPort(u) {
+		if m.checkPort(u) {
 			return types.AppState_PortAvailable
 		}
 
-		if d.checkHost(u) {
+		if m.checkHost(u) {
 			return types.AppState_HostAvailable
 		}
 
 		return types.AppState_Unavailable
 
 	case types.AppState_PortAvailable:
-		if d.checkPort(u) {
-			if d.checkHTTP(u) {
+		if m.checkPort(u) {
+			if m.checkHTTP(u) {
 				return types.AppState_AppAvailable
 			} else {
 				return types.AppState_PortAvailable
 			}
 		} else {
-			if d.checkHost(u) {
+			if m.checkHost(u) {
 				return types.AppState_HostAvailable
 			} else {
 				return types.AppState_Unavailable
@@ -155,15 +150,15 @@ func (d *HTTPDetector) check(u url.URL, state types.AppState) types.AppState {
 		}
 
 	default:
-		if !d.checkHost(u) {
+		if !m.checkHost(u) {
 			return types.AppState_Unavailable
 		}
 
-		if !d.checkPort(u) {
+		if !m.checkPort(u) {
 			return types.AppState_HostAvailable
 		}
 
-		if !d.checkHTTP(u) {
+		if !m.checkHTTP(u) {
 			return types.AppState_PortAvailable
 		}
 
@@ -171,19 +166,19 @@ func (d *HTTPDetector) check(u url.URL, state types.AppState) types.AppState {
 	}
 }
 
-func (d *HTTPDetector) checkHTTP(u url.URL) bool {
+func (m *HTTPMonitor) checkHTTP(u url.URL) bool {
 	cli := *http.DefaultClient
-	cli.Timeout = d.cfg.HTTPTimeout
+	cli.Timeout = m.cfg.HTTPTimeout
 
 	resp, err := cli.Get(u.String())
 	if err != nil {
 		return false
 	}
 
-	return d.cfg.HealthCheck(resp)
+	return m.cfg.HealthCheck(resp)
 }
 
-func (d *HTTPDetector) checkPort(u url.URL) bool {
+func (m *HTTPMonitor) checkPort(u url.URL) bool {
 	host := u.Hostname()
 	port := u.Port()
 	if port == "" {
@@ -193,7 +188,7 @@ func (d *HTTPDetector) checkPort(u url.URL) bool {
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), d.cfg.TCPTimeout)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), m.cfg.TCPTimeout)
 	if err != nil {
 		return false
 	}
@@ -205,7 +200,7 @@ func (d *HTTPDetector) checkPort(u url.URL) bool {
 	return false
 }
 
-func (d *HTTPDetector) checkHost(u url.URL) bool {
+func (m *HTTPMonitor) checkHost(u url.URL) bool {
 	ip, err := net.ResolveIPAddr("ip4", u.Hostname())
 	if err != nil {
 		// log.Printf("Error on ResolveIPAddr %v", err)
@@ -238,7 +233,7 @@ func (d *HTTPDetector) checkHost(u url.URL) bool {
 		return false
 	}
 
-	err = conn.SetReadDeadline(time.Now().Add(d.cfg.ICMPTimeout))
+	err = conn.SetReadDeadline(time.Now().Add(m.cfg.ICMPTimeout))
 	if err != nil {
 		// log.Printf("Error on SetReadDeadline %v", err)
 		return false
