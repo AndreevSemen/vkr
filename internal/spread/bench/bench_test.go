@@ -16,9 +16,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"gossip_emulation/internal/spread/agent/gossip"
-	"gossip_emulation/internal/spread/cluster/local"
-	"gossip_emulation/internal/spread/types"
+	"AndreevSemen/vkr/internal/spread/agent/gossip"
+	"AndreevSemen/vkr/internal/spread/cluster/local"
+	"AndreevSemen/vkr/internal/spread/types"
 )
 
 // func BenchmarkBroadcast(b *testing.B) {

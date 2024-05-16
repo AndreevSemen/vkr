@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"gossip_emulation/internal/spread/types"
+	"AndreevSemen/vkr/internal/spread/types"
 )
 
 var (

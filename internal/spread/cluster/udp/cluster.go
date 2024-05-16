@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gossip_emulation/internal/spread/types"
+	"AndreevSemen/vkr/internal/spread/types"
 
 	"github.com/pkg/errors"
 )

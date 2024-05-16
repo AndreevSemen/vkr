@@ -1,8 +1,8 @@
 package gossip
 
 import (
+	"AndreevSemen/vkr/internal/spread/types"
 	"context"
-	"gossip_emulation/internal/spread/types"
 	"sync"
 	"sync/atomic"
 	"time"

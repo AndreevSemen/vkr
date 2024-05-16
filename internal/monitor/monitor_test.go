@@ -1,9 +1,9 @@
 package monitor
 
 import (
-	"gossip_emulation/internal/detect/detector/detector"
-	"gossip_emulation/internal/spread/agent/gossip"
-	"gossip_emulation/internal/spread/cluster/local"
+	"AndreevSemen/vkr/internal/detect/detector/detector"
+	"AndreevSemen/vkr/internal/spread/agent/gossip"
+	"AndreevSemen/vkr/internal/spread/cluster/local"
 
 	"log"
 	"net/http"

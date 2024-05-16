@@ -1,8 +1,8 @@
 package detector
 
 import (
+	"AndreevSemen/vkr/internal/detect/types"
 	"context"
-	"gossip_emulation/internal/detect/types"
 	"math/rand"
 	"net"
 	"net/http"

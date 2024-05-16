@@ -1,8 +1,8 @@
 package monitor
 
 import (
-	detect_types "gossip_emulation/internal/detect/types"
-	spread_types "gossip_emulation/internal/spread/types"
+	detect_types "AndreevSemen/vkr/internal/detect/types"
+	spread_types "AndreevSemen/vkr/internal/spread/types"
 
 	"context"
 	"log"

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"gossip_emulation/internal/controller"
-	"gossip_emulation/internal/detect/detector/detector"
-	monitor "gossip_emulation/internal/monitor"
-	"gossip_emulation/internal/spread/agent/gossip"
-	"gossip_emulation/internal/spread/cluster/udp"
+	"AndreevSemen/vkr/internal/controller"
+	"AndreevSemen/vkr/internal/detect/detector/detector"
+	monitor "AndreevSemen/vkr/internal/monitor"
+	"AndreevSemen/vkr/internal/spread/agent/gossip"
+	"AndreevSemen/vkr/internal/spread/cluster/udp"
 	"strings"
 
 	"context"

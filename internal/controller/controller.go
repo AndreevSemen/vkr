@@ -1,7 +1,7 @@
 package controller
 
 import (
-	spread_types "gossip_emulation/internal/spread/types"
+	spread_types "AndreevSemen/vkr/internal/spread/types"
 	"log"
 	"sync"
 	"time"

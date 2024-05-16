@@ -1,4 +1,4 @@
-module gossip_emulation
+module AndreevSemen/vkr
 
 go 1.21.1
 

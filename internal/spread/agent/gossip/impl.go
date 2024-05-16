@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"gossip_emulation/internal/spread/types"
+	"AndreevSemen/vkr/internal/spread/types"
 )
 
 func (a *GossipAgent) address() string {
